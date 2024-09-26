@@ -1,10 +1,11 @@
 import {Johnemon} from './classes/Johnemon';
-
+import {Gui} from './classes/Gui';
 
 // main function to run the game
 (function () {
-    const johnemon = new Johnemon();
+    const window = new Gui('Welcome to Johnemon !');
 
-    console.log(johnemon);
+    // window.writeLine("hello there is this a test content");
+
 })();
 
