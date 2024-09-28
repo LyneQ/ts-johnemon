@@ -18,7 +18,7 @@ TypeScript and Node.js are required to run the game. If you don't have them inst
     ```
 2. Navigate to the project directory:
     ```sh
-    cd johnemon-game
+    cd ts-johnemon
     ```
 3. Install dependencies:
     ```sh
