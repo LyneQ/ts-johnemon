@@ -65,6 +65,17 @@ export class Trainer {
         this.johnemonCollection = this.johnemonCollection.filter((j) => j !== johnemon)
     }
 
+
+    addRandomItemToInventory(quantity: number) {
+        // get random item in player inventory
+        const items = Object.keys(this.inventory)
+        const randomItem = items[Math.floor(Math.random() * items.length)] as keyof Trainer['inventory'];
+
+        console.log(randomItem)
+
+        this.inventory[randomItem] += quantity
+    }
+
     /**
      * Add an item to the inventory
      * @param item

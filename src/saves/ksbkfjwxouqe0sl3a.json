@@ -1,34 +1,29 @@
 {
-  "savedOn": "9/27/2024, 4:53:21 PM",
+  "savedOn": "9/29/2024, 7:45:01 PM",
   "uid": "ksbkfjwxouqe0sl3a",
-  "day": 3,
-  "logs": [
-    "Day 1 has passed",
-    "A wild Johnemon appeared!",
-    "Day 2 has passed",
-    "Nothing happened today"
-  ],
+  "day": 1,
+  "logs": [],
   "trainer": {
     "name": "Ash Ketchum",
     "johnemonCollection": [
       {
         "uuid": "m1ksbk7c0.9kzjorpxi4",
         "name": "Benjson",
-        "level": 3,
-        "experience": 292,
-        "baseAttackDamage": 1,
-        "attackRange": 10,
-        "defenseRange": 10,
+        "level": 4,
+        "experience": 338,
+        "baseAttackDamage": 2,
+        "attackRange": 14,
+        "defenseRange": 12,
         "health": 26,
-        "baseHealth": 33,
+        "baseHealth": 34,
         "fainted": false,
         "catchPhrase": "I will be the best like no one ever was"
       }
     ],
     "inventory": {
-      "healingItems": 3,
+      "healingItems": 0,
       "reviveItems": 2,
-      "johnemonBalls": 10
+      "johnemonBalls": 9
     }
   }
 }

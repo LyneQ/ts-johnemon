@@ -35,17 +35,9 @@ export class Arena {
   /**
    * Start the battle
    */
-  public startBattle(): Promise<void> {
-   return new Promise((resolve, reject) => {
-     console.log("Battle started");
-     // Start the battle loop
-     this.battleLoop()
-         .then(() => {
-              console.log("Battle ended");
-              return resolve();
-         })
+  public async startBattle(): Promise<void> {
 
-   })
+      await this.battleLoop()
   }
 
   /**
@@ -109,7 +101,7 @@ export class Arena {
         \t${colors.green(this.playerJohnemonColoed)} lvl.${this.playerJhonemon.level} |${colors.red(this.playerJhonemon.health)} HP|
         `;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       console.log(combatGui);
       this.playerAction()
           .then((action) => {
@@ -119,9 +111,13 @@ export class Arena {
                 resolve(`Player attacked`);
                 break;
               case "catch":
+                  this.trainer.addJohnemonToCollection(this.opponentJohnemon);
+                  this.battleEnded = true;
+                  this.endBattle()
                 break;
               case "run":
-                this.endBattle();
+                  this.battleEnded = true;
+                  this.endBattle()
                 break;
               default:
                 break;
@@ -136,7 +132,7 @@ export class Arena {
 
   attackOpponent(attacker: Johnemon, victim: Johnemon) {
     const damage = this.calculateDamage(attacker, victim);
-    victim.health -= 100;
+    victim.health -= 6;
 
     if (attacker.name === this.playerJhonemon.name) {
       console.log(
