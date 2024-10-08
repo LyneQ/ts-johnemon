@@ -49,7 +49,7 @@ const initializeGame = async () => {
       const world: World = new World();
 
       await mainMenu(save, trainer, world);
-      await dailyEvent(save, trainer, world);
+      await dailyEvent(save, trainer, world, saveManager);
     }
   }
 };
@@ -110,7 +110,7 @@ const johnemonManager = async (
       { title: "Nothing", value: "nothing" },
     ],
   }).then(async (response: any) => {
-    if (response.action === "nothing") return dailyEvent(save, trainer, world);
+    if (response.action === "nothing") return dailyEvent(save, trainer, world, saveManager);
 
     const chooseJohnemon = await prompt({
       type: "select",
@@ -219,7 +219,7 @@ const johnemonManager = async (
   });
 };
 
-const dailyEvent = async (save: SaveData, trainer: Trainer, world: World) => {
+const dailyEvent = async (save: SaveData, trainer: Trainer, world: World, saveManager: SaveManager) => {
   console.clear();
   world.oneDayPasses();
   const event: any = world.getRandomizedEvent();
@@ -233,17 +233,24 @@ const dailyEvent = async (save: SaveData, trainer: Trainer, world: World) => {
 
     await mainMenu(save, trainer, world);
     if (!arena.battleEnded) {
-      await dailyEvent(save, trainer, world);
+      await dailyEvent(save, trainer, world, saveManager);
     }
   } else if (event.key === "item") {
     console.log(colors.blue("You found an item!"));
     trainer.addRandomItemToInventory(1);
+    await saveManager.saveData({
+      savedOn: new Date().toLocaleString(),
+      uid: save.uid,
+      day: world.day,
+      logs: world.logs,
+      trainer: trainer,
+    });
     await mainMenu(save, trainer, world);
-    await dailyEvent(save, trainer, world);
+    await dailyEvent(save, trainer, world, saveManager);
   } else {
     console.log(colors.blue("Nothing happened today"));
     await mainMenu(save, trainer, world);
-    await dailyEvent(save, trainer, world);
+    await dailyEvent(save, trainer, world, saveManager);
   }
 };
 
