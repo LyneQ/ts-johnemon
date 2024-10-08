@@ -232,9 +232,7 @@ const dailyEvent = async (save: SaveData, trainer: Trainer, world: World, saveMa
     await arena.startBattle();
 
     await mainMenu(save, trainer, world);
-    if (!arena.battleEnded) {
-      await dailyEvent(save, trainer, world, saveManager);
-    }
+
   } else if (event.key === "item") {
     console.log(colors.blue("You found an item!"));
     trainer.addRandomItemToInventory(1);
@@ -255,3 +253,9 @@ const dailyEvent = async (save: SaveData, trainer: Trainer, world: World, saveMa
 };
 
 initializeGame();
+
+
+/**
+ * TODO: rewrite game loop circle cause actually the "loop" can end, the player can break it easily,
+ * after a battle the process end but if the player press "CTRL+C" the loop continue
+ */

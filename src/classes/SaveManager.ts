@@ -102,10 +102,6 @@ export class SaveManager {
 
       console.log("Saving data...");
 
-      /* TODO: it's not saving the data cause this.conn is undefined
-       *  maybe try to reinitialize the connection in the constructor but what is sure is i will remake the initialization
-       *  output: Database connection is not established.
-       */
         if (this.conn) {
           const result = await this.conn.query(
             'INSERT INTO saves (savedOn, uid, day, logs, trainer) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE savedOn = VALUES(savedOn), day = VALUES(day), logs = VALUES(logs), trainer = VALUES(trainer)',
