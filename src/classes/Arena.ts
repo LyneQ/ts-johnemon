@@ -46,20 +46,24 @@ export class Arena {
   public endBattle(): void {
     // save the game
     const saveManager: SaveManager = new SaveManager();
-    // update the player johnemon
-    this.trainer.johnemonCollection = this.trainer.johnemonCollection.filter((entity) => entity.uuid !== this.playerJhonemon.uuid);
-    this.trainer.johnemonCollection.push(this.playerJhonemon);
+    saveManager.initializeDatabase().then(r => {
+        // update the player johnemon
+        this.trainer.johnemonCollection = this.trainer.johnemonCollection.filter((entity) => entity.uuid !== this.playerJhonemon.uuid);
+        this.trainer.johnemonCollection.push(this.playerJhonemon);
 
-    const data: SaveData = {
-      savedOn: new Date().toLocaleString(),
-      uid: this.saveId,
-      day: this.world.day,
-      logs: this.world.logs,
-      trainer: this.trainer
-    };
-    saveManager.saveData(data);
+        const data: SaveData = {
+            savedOn: new Date().toLocaleString(),
+            uid: this.saveId,
+            day: this.world.day,
+            logs: this.world.logs,
+            trainer: this.trainer
+        };
+        saveManager.saveData(data).then(r => {
+            console.log(colors.green("Game saved"));
+            this.battleEnded = true;
+        });
+    });
 
-    this.battleEnded = true;
   }
 
   /**

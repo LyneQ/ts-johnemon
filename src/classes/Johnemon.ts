@@ -107,11 +107,13 @@ export class Johnemon  {
      * @param data
      */
   loadJohnemon(data: Johnemon): Johnemon {
+
         this.uuid = data.uuid;
         this.name = data.name;
         this.level = data.level;
         this.experience = data.experience;
         this.attackRange = data.attackRange;
+        this.baseAttackDamage = data.baseAttackDamage;
         this.defenseRange = data.defenseRange;
         this.health = data.health;
         this.baseHealth = data.baseHealth;

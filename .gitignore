@@ -1,14 +1,20 @@
-/tmp
-/out-tsc
-
+# Node.js dependencies
 /node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-/.pnp
-.pnp.js
 
+# TypeScript output
+/tmp
+/out-tsc
+
+# IDE and editor settings
 .idea
 .vscode/*
 
-./src/saves/*
+# PnP
+/.pnp
+.pnp.js
+
+# Project-specific
+.env

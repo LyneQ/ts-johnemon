@@ -1,6 +1,8 @@
-import * as fs from "node:fs";
-import {Trainer} from "./Trainer";
+import mariadb, {Pool} from 'mariadb';
+import dotenv from 'dotenv';
+dotenv.config();
 
+import { Trainer } from './Trainer';
 
 export interface SaveData {
   savedOn: string;
@@ -9,17 +11,62 @@ export interface SaveData {
   logs: string[];
   trainer: Trainer;
 }
+let pool: Pool;
+
+try {
+  pool = mariadb.createPool({
+    host: process.env.DB,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    connectionLimit: 5,
+  });
+} catch (err: any) {
+  console.log(err.sqlMessage.red);
+}
 
 export class SaveManager {
-  directory: string = "./src/saves";
+  protected conn: mariadb.PoolConnection | undefined;
 
   constructor() {
-    this.checkSaveDir();
+    if (!process.env.DB_NAME) {
+      throw new Error("Database name is not provided!");
+    }
   }
 
-  /**
-   * Generate a unique id
-   */
+   async initializeDatabase(): Promise<void> {
+    this.conn = await pool.getConnection();
+    await this.createDatabase();
+    console.log("Database connection established");
+    await this.createSchema();
+  }
+
+  private async createDatabase(): Promise<void> {
+    try {
+      this.conn?.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME}`);
+      this.conn?.query(`USE ${process.env.DB_NAME};`);
+    }
+    catch (err) {
+      console.error("Database creation failed!", err);
+    }
+  }
+
+  private async createSchema(): Promise<void> {
+    try {
+      await this.conn?.query(`
+        CREATE TABLE IF NOT EXISTS saves (
+          uid VARCHAR(255) PRIMARY KEY,
+          savedOn VARCHAR(255),
+          day INT,
+          logs JSON,
+          trainer JSON
+        );
+      `);
+      console.log("Schema created or already exists");
+    } catch (err) {
+      console.error("Error creating schema:", err);
+    }
+  }
+
   get generateUID(): string {
     return (
       Date.now().toString(36).substring(2, 15) +
@@ -27,46 +74,48 @@ export class SaveManager {
     );
   }
 
-  /**
-   * Check if the save directory exists, if not create it
-   */
-  private checkSaveDir(): void {
-    if (!fs.existsSync(this.directory)) fs.mkdirSync(this.directory);
+  async getSavesCollection(): Promise<string[]> {
+    try {
+      const rows = await this.conn?.query('SELECT uid FROM saves');
+      return rows?.map((row: { uid: string }) => row.uid) || [];
+    } catch (err) {
+      console.error("Error getting saves collection:", err);
+      return [];
+    }
   }
 
-  /**
-   * Get all save files in the saves directory
-   */
-  get getSavesCollection(): string[] | null {
-    return fs
-      .readdirSync(this.directory)
-      .filter((file) => file.endsWith(".json"));
+  async getSave(uid: string): Promise<SaveData | null> {
+    try {
+      const rows = await this.conn?.query('SELECT * FROM saves WHERE uid = ?', [uid]);
+      if (rows?.length) {
+        return rows[0];
+      }
+      return null;
+    } catch (err) {
+      console.error("Error getting save:", err);
+      return null;
+    }
   }
 
-  /**
-   * Get save data from a file
-   * @param uid
-   */
-  getSave(uid: string): SaveData | null {
-    const filePath = `${this.directory}/${uid}.json`;
-    return fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, "utf-8")) : null;
-  }
+  async saveData(data: SaveData): Promise<void> {
+    try {
 
-  /**
-   * Save game data to a file
-   * @param data
-   */
-  saveData(data: {
-    savedOn: string;
-    day: number;
-    uid: string;
-    logs: string[];
-    trainer: Trainer;
-  }): string | void {
-    fs.writeFileSync(
-      `${this.directory}/${data.uid}.json`,
-      JSON.stringify(data, null, 2),
-      null,
-    );
+      console.log("Saving data...");
+
+      /* TODO: it's not saving the data cause this.conn is undefined
+       *  maybe try to reinitialize the connection in the constructor but what is sure is i will remake the initialization
+       *  output: Database connection is not established.
+       */
+        if (this.conn) {
+          const result = await this.conn.query(
+            'INSERT INTO saves (savedOn, uid, day, logs, trainer) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE savedOn = VALUES(savedOn), day = VALUES(day), logs = VALUES(logs), trainer = VALUES(trainer)',
+            [data.savedOn, data.uid, data.day, JSON.stringify(data.logs), JSON.stringify(data.trainer)]
+          );
+        } else {
+          console.error("Internal error");
+        }
+    } catch (err) {
+      console.error("Error saving data:", err);
+    }
   }
 }
