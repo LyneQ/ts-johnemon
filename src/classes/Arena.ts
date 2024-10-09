@@ -11,7 +11,7 @@ export class Arena {
   public saveId: string;
   private readonly trainer: Trainer;
   private readonly playerJhonemon: Johnemon;
-  private readonly playerJohnemonColoed: string;
+  private readonly playerJohnemonColored: string;
   private opponentJohnemon: Johnemon;
   private readonly opponentJohnemonColored: string;
   private world: World;
@@ -23,7 +23,7 @@ export class Arena {
     this.saveId = saveId;
     this.trainer = trainer;
     this.playerJhonemon = new Johnemon().loadJohnemon(trainer.johnemonCollection[0]);
-    this.playerJohnemonColoed = colors.green(this.playerJhonemon.name);
+    this.playerJohnemonColored = colors.green(this.playerJhonemon.name);
     this.opponentJohnemon = new Johnemon();
     this.opponentJohnemonColored = colors.blue(this.opponentJohnemon.name);
     this.world = world;
@@ -32,37 +32,30 @@ export class Arena {
 
   }
 
-  /**
-   * Start the battle
-   */
-  public async startBattle(): Promise<void> {
-
-      await this.battleLoop()
-  }
 
   /**
    * End the battle
    */
-  public endBattle(): void {
-    // save the game
-    const saveManager: SaveManager = new SaveManager();
-    saveManager.initializeDatabase().then(r => {
-        // update the player johnemon
-        this.trainer.johnemonCollection = this.trainer.johnemonCollection.filter((entity) => entity.uuid !== this.playerJhonemon.uuid);
-        this.trainer.johnemonCollection.push(this.playerJhonemon);
+  public async endBattle(): Promise<void> {
+      // save the game
+      const saveManager: SaveManager = new SaveManager();
+      return await saveManager.initializeDatabase().then(r => {
+          // update the player johnemon
+          this.trainer.johnemonCollection = this.trainer.johnemonCollection.filter((entity) => entity.uuid !== this.playerJhonemon.uuid);
+          this.trainer.johnemonCollection.push(this.playerJhonemon);
 
-        const data: SaveData = {
-            savedOn: new Date().toLocaleString(),
-            uid: this.saveId,
-            day: this.world.day,
-            logs: this.world.logs,
-            trainer: this.trainer
-        };
-        saveManager.saveData(data).then(r => {
-            console.log(colors.green("Game saved"));
-            this.battleEnded = true;
-        });
-    });
+          const data: SaveData = {
+              savedOn: new Date().toLocaleString(),
+              uid: this.saveId,
+              day: this.world.day,
+              logs: this.world.logs,
+              trainer: this.trainer
+          };
+          return saveManager.saveData(data).then(r => {
+              console.log(colors.green("Game saved"));
+              this.battleEnded = true;
+          });
+      });
 
   }
 
@@ -70,29 +63,29 @@ export class Arena {
    * Check if the battle has to be ended
    * @private
    */
-  private battleStatus() {
-    const opponentHGealth = this.opponentJohnemon.health;
-    const playerHealth = this.playerJhonemon.health;
+  private async battleStatus() {
+      const opponentHealth = this.opponentJohnemon.health;
+      const playerHealth = this.playerJhonemon.health;
 
-    if (opponentHGealth < 1) {
-      console.log(`${this.opponentJohnemonColored} fainted`);
-      this.playerJhonemon.gainExperience(this.opponentJohnemon.level);
+      if (opponentHealth <= 0) {
+          console.log(`${this.opponentJohnemonColored} fainted`);
+          this.playerJhonemon.gainExperience(this.opponentJohnemon.level);
 
-      this.endBattle();
-    }
-    if (playerHealth < 1) {
-      console.log(`${this.playerJohnemonColoed} fainted`);
-      this.endBattle();
-    }
+          await this.endBattle();
+      }
+      if (playerHealth < 1) {
+          console.log(`${this.playerJohnemonColored} fainted`);
+          await this.endBattle();
+      }
   }
 
   /**
    * Battle loop logic
    * @private
    */
-  private async battleLoop() {
+  async battleLoop() {
     while (!this.battleEnded) {
-        this.battleStatus();
+        await this.battleStatus();
         if ( this.battleEnded ) break;
        await this.displayBattleScreen()
     }
@@ -102,7 +95,7 @@ export class Arena {
     const combatGui = `
         \t${colors.blue(this.opponentJohnemonColored)} lvl.${this.opponentJohnemon.level} |${colors.red(this.opponentJohnemon.health)} HP|
         \tvs
-        \t${colors.green(this.playerJohnemonColoed)} lvl.${this.playerJhonemon.level} |${colors.red(this.playerJhonemon.health)} HP|
+        \t${colors.green(this.playerJohnemonColored)} lvl.${this.playerJhonemon.level} |${colors.red(this.playerJhonemon.health)} HP|
         `;
 
     return new Promise((resolve) => {
@@ -140,11 +133,11 @@ export class Arena {
 
     if (attacker.name === this.playerJhonemon.name) {
       console.log(
-        `${this.playerJohnemonColoed} attacked ${this.opponentJohnemonColored} for ${colors.red(damage)} damage`,
+        `${this.playerJohnemonColored} attacked ${this.opponentJohnemonColored} for ${colors.red(damage)} damage`,
       );
     } else {
       console.log(
-        `${this.opponentJohnemonColored} attacked ${this.playerJohnemonColoed} for ${colors.red(damage)} damage`,
+        `${this.opponentJohnemonColored} attacked ${this.playerJohnemonColored} for ${colors.red(damage)} damage`,
       );
     }
   }
@@ -181,6 +174,6 @@ export class Arena {
       Math.random() * (attacker.attackRange - attacker.baseAttackDamage + 3) +
         attacker.baseAttackDamage * attacker.level -
         victim.defenseRange,
-    ); // make damage positive
+    );
   }
 }

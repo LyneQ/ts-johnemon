@@ -102,10 +102,15 @@ export class Trainer {
    * Release a Johnemon
    * @param johnemon
    */
-  releaseJohnemon(johnemon: Johnemon) {
-    this.johnemonCollection = this.johnemonCollection.filter(
-      (j) => j !== johnemon,
-    );
+  releaseJohnemon(johnemon: Johnemon): Promise<{ message: string; status: string }> {
+
+    return new Promise((resolve, reject) => {
+
+      this.johnemonCollection = this.johnemonCollection.filter(
+          (j) => j.uuid !== johnemon.uuid,
+      )
+      resolve({message: `${johnemon.name} has been released`, status: "success"})
+    })
   }
 
   /**
