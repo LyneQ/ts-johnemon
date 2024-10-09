@@ -7,7 +7,6 @@ const prompt = require("prompts");
 const colors = require("colors/safe");
 
 export class Arena {
-
   public saveId: string;
   private readonly trainer: Trainer;
   private readonly playerJhonemon: Johnemon;
@@ -19,44 +18,45 @@ export class Arena {
   public turn: number;
 
   constructor(saveId: string, trainer: Trainer, world: World) {
-
     this.saveId = saveId;
     this.trainer = trainer;
-    this.playerJhonemon = new Johnemon().loadJohnemon(trainer.johnemonCollection[0]);
+    this.playerJhonemon = new Johnemon().loadJohnemon(
+      trainer.johnemonCollection[0],
+    );
     this.playerJohnemonColored = colors.green(this.playerJhonemon.name);
     this.opponentJohnemon = new Johnemon();
     this.opponentJohnemonColored = colors.blue(this.opponentJohnemon.name);
     this.world = world;
     this.battleEnded = false;
     this.turn = 0;
-
   }
-
 
   /**
    * End the battle
    */
   public async endBattle(): Promise<void> {
-      // save the game
-      const saveManager: SaveManager = new SaveManager();
-      return await saveManager.initializeDatabase().then(r => {
-          // update the player johnemon
-          this.trainer.johnemonCollection = this.trainer.johnemonCollection.filter((entity) => entity.uuid !== this.playerJhonemon.uuid);
-          this.trainer.johnemonCollection.push(this.playerJhonemon);
+    // save the game
+    const saveManager: SaveManager = new SaveManager();
+    return await saveManager.initializeDatabase().then((r) => {
 
-          const data: SaveData = {
-              savedOn: new Date().toLocaleString(),
-              uid: this.saveId,
-              day: this.world.day,
-              logs: this.world.logs,
-              trainer: this.trainer
-          };
-          return saveManager.saveData(data).then(r => {
-              console.log(colors.green("Game saved"));
-              this.battleEnded = true;
-          });
+      // update the player johnemon
+      this.trainer.johnemonCollection = this.trainer.johnemonCollection.filter(
+        (entity) => entity.uuid !== this.playerJhonemon.uuid,
+      );
+      this.trainer.johnemonCollection.push(this.playerJhonemon);
+
+      const data: SaveData = {
+        savedOn: new Date().toLocaleString(),
+        uid: this.saveId,
+        day: this.world.day,
+        logs: this.world.logs,
+        trainer: this.trainer,
+      };
+      return saveManager.saveData(data).then((r) => {
+        console.log(colors.green("Game saved"));
+        this.battleEnded = true;
       });
-
+    });
   }
 
   /**
@@ -64,19 +64,19 @@ export class Arena {
    * @private
    */
   private async battleStatus() {
-      const opponentHealth = this.opponentJohnemon.health;
-      const playerHealth = this.playerJhonemon.health;
+    const opponentHealth = this.opponentJohnemon.health;
+    const playerHealth = this.playerJhonemon.health;
 
-      if (opponentHealth <= 0) {
-          console.log(`${this.opponentJohnemonColored} fainted`);
-          this.playerJhonemon.gainExperience(this.opponentJohnemon.level);
+    if (opponentHealth <= 0) {
+      console.log(`${this.opponentJohnemonColored} fainted`);
+      this.playerJhonemon.gainExperience(this.opponentJohnemon.level);
 
-          await this.endBattle();
-      }
-      if (playerHealth < 1) {
-          console.log(`${this.playerJohnemonColored} fainted`);
-          await this.endBattle();
-      }
+      await this.endBattle();
+    }
+    if (playerHealth < 1) {
+      console.log(`${this.playerJohnemonColored} fainted`);
+      await this.endBattle();
+    }
   }
 
   /**
@@ -84,11 +84,17 @@ export class Arena {
    * @private
    */
   async battleLoop() {
-    while (!this.battleEnded) {
-        await this.battleStatus();
-        if ( this.battleEnded ) break;
-       await this.displayBattleScreen()
-    }
+    return new Promise(async (resolve) => {
+      while (true) {
+          if (this.battleEnded) return resolve("Battle ended");
+
+            await this.battleStatus();
+            if (this.battleEnded) {
+              resolve("Battle ended");
+            }
+            await this.displayBattleScreen();
+      }
+    });
   }
 
   async displayBattleScreen() {
@@ -99,33 +105,36 @@ export class Arena {
         `;
 
     return new Promise((resolve) => {
-      console.log(combatGui);
-      this.playerAction()
-          .then((action) => {
-            switch (action) {
-              case "attack":
-                this.attackOpponent(this.playerJhonemon, this.opponentJohnemon);
-                resolve(`Player attacked`);
-                break;
-              case "catch":
-                  this.trainer.addJohnemonToCollection(this.opponentJohnemon);
-                  this.battleEnded = true;
-                  this.endBattle()
-                break;
-              case "run":
-                  this.battleEnded = true;
-                  this.endBattle()
-                break;
-              default:
-                break;
-            }
-          })
-          .catch((err) => {
-            console.log(err);
-          });
-    })
-
-  }
+        console.log(combatGui);
+        this.playerAction()
+            .then(async (action) => {
+                switch (action) {
+                    case "attack":
+                        this.attackOpponent(this.playerJhonemon, this.opponentJohnemon);
+                        resolve(`Player attacked`);
+                        break;
+                    case "catch":
+                        this.trainer.addJohnemonToCollection(this.opponentJohnemon);
+                        this.battleEnded = true;
+                        await this.endBattle();
+                        resolve(`Player caught the Johnemon`);
+                        break;
+                    case "run":
+                        this.battleEnded = true;
+                        await this.endBattle();
+                        resolve(`Player ran away`);
+                        break;
+                    default:
+                        resolve(`No action taken`);
+                        break;
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                resolve(`Error occurred`);
+            });
+    });
+}
 
   attackOpponent(attacker: Johnemon, victim: Johnemon) {
     const damage = this.calculateDamage(attacker, victim);
@@ -146,21 +155,20 @@ export class Arena {
    * get the player action
    */
   async playerAction() {
-      return new Promise((resolve, reject) => {
-          prompt({
-              type: "select",
-              name: "action",
-              message: "Choose an action",
-              choices: [
-                  { title: "Attack", value: "attack" },
-                  { title: "Catch", value: "catch" },
-                  { title: "Run", value: "run" },
-              ],
-          })
-              .then((response: any) => {
-                resolve(response.action);
-              })
+    return new Promise((resolve, reject) => {
+      prompt({
+        type: "select",
+        name: "action",
+        message: "Choose an action",
+        choices: [
+          { title: "Attack", value: "attack" },
+          { title: "Catch", value: "catch" },
+          { title: "Run", value: "run" },
+        ],
+      }).then((response: any) => {
+        resolve(response.action);
       });
+    });
   }
 
   /**

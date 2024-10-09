@@ -195,7 +195,10 @@ await this.SaveManager.getSave(saveId) ? this.SaveData = await this.SaveManager.
                       logs: this.World.logs,
                       trainer: this.Trainer,
                     });
-                    return await this.johnemonMenu(colors.green(releaseStatus.message));
+                    if (releaseStatus.status === "success") {
+                        return await this.johnemonMenu(colors.green(releaseStatus.message));
+                    }
+                    return await this.johnemonMenu(colors.red(releaseStatus.message));
             }
         });
     }
@@ -213,9 +216,11 @@ await this.SaveManager.getSave(saveId) ? this.SaveData = await this.SaveManager.
             this.Arena = new Arena(this.SaveData!.uid, this.Trainer, this.World);
 
             await this.Arena.battleLoop();
+            console.log('Battle ended in game.ts');
         } else if (event.key === "item") {
-            console.log(colors.blue("You found an item!"));
-            this.Trainer.addRandomItemToInventory(1);
+            const item =  this.Trainer.addRandomItemToInventory(1);
+            console.log(colors.blue(`You found a ${colors.underline(colors.yellow(item))}`));
+
             await this.SaveManager.saveData({
                 savedOn: new Date().toLocaleString(),
                 uid: this.SaveData!.uid,

@@ -8,6 +8,7 @@ const main = async (gameLoop: Game) => {
     while (true) {
       await gameLoop.mainMenu();
       await gameLoop.johnemonMenu();
+      console.clear();
       await gameLoop.dailyEvent();
     }
   } catch (error) {

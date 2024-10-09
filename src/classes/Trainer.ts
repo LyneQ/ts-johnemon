@@ -43,8 +43,7 @@ export class Trainer {
    * @param johnemon
    */
   healJohnemon(
-    johnemon: Johnemon,
-  ): Promise<{ message: string; status: string }> {
+    johnemon: Johnemon): Promise<{ message: string; status: string }> {
     return new Promise((resolve, reject) => {
       if (this.inventory.healingItems > 0) {
         const johnemonInCollection = this.johnemonCollection.find(
@@ -66,9 +65,7 @@ export class Trainer {
     });
   }
 
-  reviveJohnemon(
-    johnemon: Johnemon,
-  ): Promise<{ message: string; status: string }> {
+  reviveJohnemon(johnemon: Johnemon): Promise<{ message: string; status: string }> {
     return new Promise((resolve, reject) => {
       if (this.inventory.reviveItems > 0) {
         const johnemonInCollection = this.johnemonCollection.find(
@@ -106,6 +103,8 @@ export class Trainer {
 
     return new Promise((resolve, reject) => {
 
+      if (this.johnemonCollection.length === 1) return resolve({message: "You can't release your last friend 😿", status: "error"});
+
       this.johnemonCollection = this.johnemonCollection.filter(
           (j) => j.uuid !== johnemon.uuid,
       )
@@ -124,9 +123,8 @@ export class Trainer {
       Math.floor(Math.random() * items.length)
     ] as keyof Trainer["inventory"];
 
-    console.log(randomItem);
-
     this.inventory[randomItem] += quantity;
+    return randomItem;
   }
 
   /**
