@@ -31,32 +31,13 @@ export class Game {
         const availableSaves: string[] = await this.SaveManager.getSavesCollection();
 
         if (availableSaves.length === 0) {
-            console.log("No save found, creating new save");
-            this.Trainer = new Trainer("Ash Ketchum");
-            this.World = new World();
-            this.Trainer.johnemonCollection.push(new Johnemon());
 
-            const data: SaveData = {
-                savedOn: new Date().toLocaleString(),
-                uid: this.SaveManager.generateUID,
-                day: 1,
-                logs: [],
-                trainer: this.Trainer,
-            };
-            await this.SaveManager.saveData(data);
-
-            // Check if the save was successful
-            const newAvailableSaves: string[] = await this.SaveManager.getSavesCollection();
-            if (newAvailableSaves.length > 0) {
-                console.log("New save created successfully");
-            } else {
-                console.error("Failed to create a new save.");
-                return;
-            }
+            await this.createNewSave();
+            await this.initializeGameData()
         }
         else {
             const saveId: string = availableSaves[0];
-await this.SaveManager.getSave(saveId) ? this.SaveData = await this.SaveManager.getSave(saveId) : null;
+            await this.SaveManager.getSave(saveId) ? this.SaveData = await this.SaveManager.getSave(saveId) : null;
 
             if (this.SaveData) {
                 this.Trainer = new Trainer(this.SaveData.trainer.name).loadTrainer(
@@ -65,6 +46,41 @@ await this.SaveManager.getSave(saveId) ? this.SaveData = await this.SaveManager.
                 this.World = new World();
             }
         }
+    }
+
+    async createNewSave() {
+        const starterJohnemon = [new Johnemon(), new Johnemon(), new Johnemon()];
+
+        const questionChain = [
+            {
+                type: "text",
+                name: "name",
+                message: "What's your name?",
+            },
+            {
+                type: "select",
+                name: "johnemon",
+                message: "Choose your first Johnemon",
+                choices: starterJohnemon.map((j: Johnemon) => ({title: j.name, value: j})),
+            }
+        ];
+
+        await prompt(questionChain)
+            .then(async (response: any) => {
+                this.Trainer = new Trainer(response.name);
+                this.Trainer.johnemonCollection.push(response.johnemon);
+
+                this.World = new World();
+
+                const data: SaveData = {
+                    savedOn: new Date().toLocaleString(),
+                    uid: this.SaveManager.generateUID,
+                    day: 1,
+                    logs: [],
+                    trainer: this.Trainer,
+                };
+                await this.SaveManager.saveData(data);
+            });
     }
 
     /**
